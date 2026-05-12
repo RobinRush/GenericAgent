@@ -92,6 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--wecom', action='store_true', help='启动 WeCom Bot');
     parser.add_argument('--dingtalk', '--dt', dest='dingtalk', action='store_true', help='启动 DingTalk Bot');
     parser.add_argument('--sched', action='store_true', help='启动计划任务调度器')
+    parser.add_argument('--api', action='store_true', help='启动 OpenAI 兼容 API (/v1/chat/completions)')
     parser.add_argument('--llm_no', type=int, default=0, help='LLM编号')
     args = parser.parse_args()
     port = str(find_free_port()) if args.port == '0' else args.port
@@ -134,6 +135,12 @@ if __name__ == '__main__':
         print('[Launch] DingTalk Bot started')
     else: print('[Launch] DingTalk Bot not enabled (use --dingtalk to start)')
     
+    if args.api:
+        apiproc = subprocess.Popen([sys.executable, os.path.join(frontends_dir, "oaiapp.py")], creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
+        atexit.register(apiproc.kill)
+        print('[Launch] OpenAI-compatible API started')
+    else: print('[Launch] OpenAI-compatible API not enabled (use --api to start)')
+
     if args.sched:
         scheduler_proc = subprocess.Popen([sys.executable, os.path.join(script_dir, "agentmain.py"), "--reflect", os.path.join(script_dir, "reflect", "scheduler.py"), "--llm_no", str(args.llm_no)], creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
         atexit.register(scheduler_proc.kill)

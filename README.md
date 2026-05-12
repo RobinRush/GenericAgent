@@ -170,6 +170,52 @@ The default Streamlit desktop UI started by `python launch.pyw`, plus the QQ / T
 - `/continue N` - restore the `N`th recoverable conversation
 
 
+## 🔌 OpenAI-Compatible API
+
+Expose the **whole agent** (not just the underlying LLM) as a single OpenAI-style model via `/v1/chat/completions`. Any OAI-compatible client (NextChat, Open WebUI, LobeChat, raw OpenAI SDK, curl…) can talk to GenericAgent and automatically get the full agent behavior: tool loop, memory, file I/O, browser control. Streaming (SSE) is supported.
+
+#### Configure
+
+In `mykey.py`:
+
+```python
+oai_api_token   = 'sk-local-your-secret-token'   # required, Bearer token
+# oai_api_host  = '127.0.0.1'                    # optional; '0.0.0.0' to expose on LAN
+# oai_api_port  = 18000                          # optional
+# oai_api_timeout = 600                          # optional, seconds per request
+```
+
+#### Run
+
+```bash
+python frontends/oaiapp.py            # standalone
+# or together with the desktop GUI:
+python launch.pyw --api
+```
+
+#### Endpoints
+
+- `POST /v1/chat/completions` — OpenAI Chat Completions, supports `stream: true/false`
+- `GET  /v1/models` — lists all configured backend LLMs (informational)
+
+#### Quick test
+
+```bash
+curl -N http://127.0.0.1:18000/v1/chat/completions \
+  -H "Authorization: Bearer sk-local-your-secret-token" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"any","stream":true,
+       "messages":[{"role":"user","content":"list the current directory"}]}'
+```
+
+#### Notes & Limitations
+
+- **Shared single agent instance** — concurrent HTTP requests are serialized through the agent's task queue. The agent's own history is the conversation source of truth; only the **last** `user` message from `messages[]` is forwarded each call.
+- The `model` field in requests is **ignored**; the currently selected backend (`agent.llm_no`) is used.
+- Multimodal `image_url` parts are noted as placeholders, not yet wired to the agent's image channel.
+- Client disconnects do **not** cancel an in-flight agent loop — it runs to completion server-side.
+
+
 ## 📊 Comparison with Similar Tools
 
 | Feature | GenericAgent | OpenClaw | Claude Code |
@@ -484,6 +530,52 @@ dingtalk_allowed_users = ["your_staff_id"]  # 或 ['*']
 - `/new` - 开启新对话并清空当前上下文
 - `/continue` - 列出可恢复会话快照
 - `/continue N` - 恢复第 `N` 个可恢复会话
+
+
+## 🔌 OpenAI 兼容 API
+
+通过 `/v1/chat/completions` 把**整个智能体**（不是底层裸 LLM）作为一个 OpenAI 风格的"模型"暴露出去。任何兼容 OpenAI 接口的客户端（NextChat、Open WebUI、LobeChat、OpenAI SDK、curl 等）都可以接入 GenericAgent，**自动获得完整智能体行为**：工具循环、分层记忆、文件 IO、浏览器控制等。支持流式（SSE）。
+
+#### 配置
+
+在 `mykey.py` 中：
+
+```python
+oai_api_token   = 'sk-local-your-secret-token'   # 必填，Bearer token
+# oai_api_host  = '127.0.0.1'                    # 可选；'0.0.0.0' 暴露到局域网
+# oai_api_port  = 18000                          # 可选
+# oai_api_timeout = 600                          # 可选，单请求超时秒数
+```
+
+#### 启动
+
+```bash
+python frontends/oaiapp.py            # 独立运行
+# 或与桌面 GUI 一起：
+python launch.pyw --api
+```
+
+#### 端点
+
+- `POST /v1/chat/completions` — OpenAI Chat Completions，支持 `stream: true/false`
+- `GET  /v1/models` — 列出当前配置的全部 LLM 后端（仅信息展示）
+
+#### 快速测试
+
+```bash
+curl -N http://127.0.0.1:18000/v1/chat/completions \
+  -H "Authorization: Bearer sk-local-your-secret-token" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"any","stream":true,
+       "messages":[{"role":"user","content":"列出当前目录"}]}'
+```
+
+#### 说明与限制
+
+- **共享单实例**：所有 HTTP 请求经 agent 任务队列串行化。Agent 自身维护对话历史；每次调用只取 `messages[]` 中**最后一条** `user` 消息转发给 agent。
+- 请求中的 `model` 字段**会被忽略**，使用当前选中的后端（`agent.llm_no`）。
+- 多模态 `image_url` 暂未接入 agent 的 images 通道（仅占位）。
+- 客户端断开**不会**取消正在执行的 agent loop —— 任务会在服务端跑完。
 
 
 ## 📊 与同类产品对比
