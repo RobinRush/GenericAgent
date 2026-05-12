@@ -417,6 +417,14 @@ native_oai_config = {
 # dingtalk_client_secret = 'your_app_secret'
 # dingtalk_allowed_users = ['your_staff_id']        # 留空或 ['*'] 表示允许所有钉钉用户
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  OpenAI 兼容 API 接口（让外部应用通过 /v1/chat/completions 访问本智能体）
+# ══════════════════════════════════════════════════════════════════════════════
+# oai_api_token   = 'sk-local-your-secret-token'    # 必填：Bearer token
+# oai_api_host    = '127.0.0.1'                     # 可选；'0.0.0.0' 暴露到局域网
+# oai_api_port    = 18000                           # 可选
+# oai_api_timeout = 600                             # 可选，单请求超时秒数
+
 # 可选：Langfuse 追踪。不设此项则不 import langfuse，零影响
 # langfuse_config = {
 #     'public_key': 'pk-lf-...',
